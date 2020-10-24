@@ -1,7 +1,7 @@
 %define _binary_payload w9.gzdio
 Name:           mtools
 Summary:        mtools, read/write/list/format DOS disks under Unix
-Version:        4.0.23
+Version:        4.0.25
 Release:        1
 License:        GPLv3+
 Group:          Utilities/System
@@ -135,6 +135,13 @@ if [ -f %{_bindir}/install-info ] ; then
 fi
 
 %changelog
+* Sat Oct 24 2020 Alain Knaff <alain@knaff.lu>
+- Preserve non-updated contents of info sector, just in case it contains program code
+- When parsing config file, always use "C" locale for case-insensitive comparisons
+* Sun Mar 22 2020 Alain Knaff <alain@knaff.lu>
+- Spelling fixes in documentation
+- Permit calling "make install" with >= -j2
+- Added AC_SYS_LARGEFILE, needed for compiling on certain ARM procs
 * Sun Dec 09 2018 Alain Knaff <alain@knaff.lu>
 - Address lots of compiler warnings (assignments between different types)
 - Network speedup fixes for floppyd (TCP_CORK)

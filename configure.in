@@ -101,6 +101,7 @@ AC_CHECK_HEADERS(termio.h sys/termio.h, [break])
 AC_CHECK_HEADERS(termios.h sys/termios.h, [break])
 
 dnl Check for types
+AC_SYS_LARGEFILE
 AC_TYPE_INT8_T
 AC_TYPE_INT16_T
 AC_TYPE_INT32_T
@@ -171,7 +172,7 @@ strcasecmp strncasecmp strnlen atexit on_exit getpass memmove \
 strdup strndup strcspn strspn strtoul strtol strtoll memcpy strpbrk memset \
 setenv seteuid setresuid setpgrp \
 tcsetattr tcflush basename fchdir media_oldaliases llseek lseek64 \
-snprintf stat64 setlocale \
+snprintf stat64 setlocale toupper_l strncasecmp_l \
 wcsdup wcscasecmp wcsnlen putwc \
 getuserid getgroupid \
 alarm sigaction usleep)
