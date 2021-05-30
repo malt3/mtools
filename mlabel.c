@@ -30,8 +30,8 @@
 static void _label_name(doscp_t *cp, const char *filename, int verbose UNUSEDP,
 			int *mangled, dos_name_t *ans, int preserve_case)
 {
-	int len;
-	int i;
+	size_t len;
+	size_t i;
 	int have_lower, have_upper;
 	wchar_t wbuffer[12];
 
@@ -119,7 +119,7 @@ void mlabel(int argc, char **argv, int type UNUSEDP)
 	int c;
 	int mangled;
 	enum { SER_NONE, SER_RANDOM, SER_SET }  set_serial = SER_NONE;
-	unsigned long serial = 0;
+	uint32_t serial = 0;
 	int need_write_boot = 0;
 	int have_boot = 0;
 	char *eptr;
@@ -159,17 +159,19 @@ void mlabel(int argc, char **argv, int type UNUSEDP)
 			case 'n':
 				set_serial = SER_RANDOM;
 				init_random();
-				serial=random();
+				serial=(uint32_t) random();
 				break;
 			case 'N':
 				set_serial = SER_SET;
-				serial = strtoul(optarg, &eptr, 16);
+				errno=0;
+				serial = strtou32(optarg, &eptr, 16);
 				if(*eptr) {
 					fprintf(stderr,
 						"%s not a valid serial number\n",
 						optarg);
 					exit(1);
 				}
+				check_number_parse_errno((char)c, optarg, eptr);
 				break;
 			case 'h':
 				usage(0);

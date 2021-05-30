@@ -77,7 +77,8 @@ typedef struct switches_l {
 	T_STRING,
 	T_UINT,
 	T_UINT8,
-	T_UINT16
+	T_UINT16,
+	T_UQSTRING
     } type;
 } switches_t;
 
@@ -175,7 +176,8 @@ static switches_t dswitches[]= {
     { "HIDDEN", OFFS(hidden), T_UINT },
     { "PRECMD", OFFS(precmd), T_STRING },
     { "BLOCKSIZE", OFFS(blocksize), T_UINT },
-    { "CODEPAGE", OFFS(codepage), T_UINT }
+    { "CODEPAGE", OFFS(codepage), T_UINT },
+    { "DATA_MAP", OFFS(data_map), T_UQSTRING }
 };
 
 #if (defined  HAVE_TOUPPER_L || defined HAVE_STRNCASECMP_L)
@@ -189,8 +191,9 @@ static void init_canon(void) {
 
 #ifdef HAVE_TOUPPER_L
 static int canon_drv(int drive) {
+    int ret;
     init_canon();
-    int ret = toupper_l(drive, C);
+    ret = toupper_l(drive, C);
     return ret;
 }
 #else
@@ -200,18 +203,18 @@ static int canon_drv(int drive) {
 #endif
 
 #ifdef HAVE_STRNCASECMP_L
-static int cmp_tok(const char *a, const char *b, int len) {
+static int cmp_tok(const char *a, const char *b, size_t len) {
     init_canon();
     return strncasecmp_l(a, b, len, C);
 }
 #else
-static int cmp_tok(const char *a, const char *b, int len) {
+static int cmp_tok(const char *a, const char *b, size_t len) {
     return strncasecmp(a, b, len);
 }
 #endif
 
 
-char ch_canon_drv(char drive) {
+static char ch_canon_drv(char drive) {
     return (char) canon_drv( (unsigned char) drive);
 }
 
@@ -243,7 +246,10 @@ static void syntax(const char *msg, int thisLine)
     fprintf(stderr,"Syntax error at line %d ", lastTokenLinenumber);
     if(drive) fprintf(stderr, "for drive %c: ", drive);
     if(token) fprintf(stderr, "column %ld ", (long)(token - buffer));
-    fprintf(stderr, "in file %s: %s\n", filename, msg);
+    fprintf(stderr, "in file %s: %s", filename, msg);
+    if(errno != 0)
+	fprintf(stderr, " (%s)", strerror(errno));
+    fprintf(stderr, "\n");
     exit(1);
 }
 
@@ -255,23 +261,38 @@ static void get_env_conf(void)
     for(i=0; i< sizeof(global_switches) / sizeof(*global_switches); i++) {
 	s = getenv(global_switches[i].name);
 	if(s) {
-	    if(global_switches[i].type == T_INT)
+	    errno = 0;
+	    switch(global_switches[i].type) {
+	    case T_INT:
 		* ((int *)global_switches[i].address) = strtoi(s,0,0);
-	    if(global_switches[i].type == T_UINT)
+		break;
+	    case T_UINT:
 		* ((unsigned int *)global_switches[i].address) = strtoui(s,0,0);
-	    if(global_switches[i].type == T_UINT8)
+		break;
+	    case T_UINT8:
 		* ((uint8_t *)global_switches[i].address) = strtou8(s,0,0);
-	    if(global_switches[i].type == T_UINT16)
+		break;
+	    case T_UINT16:
 		* ((uint16_t *)global_switches[i].address) = strtou16(s,0,0);
-	    else if (global_switches[i].type == T_STRING)
+		break;
+	    case T_STRING:
+	    case T_UQSTRING:
 		* ((char **)global_switches[i].address) = s;
+		break;
+	    }
+	    if(errno != 0) {
+		fprintf(stderr, "Bad number %s for %s (%s)\n", s,
+			global_switches[i].name,
+			strerror(errno));
+		exit(1);
+	    }
 	}
     }
 }
 
 static int mtools_getline(void)
 {
-    if(!fp || !fgets(buffer, MAX_LINE_LEN, fp))
+    if(!fp || !fgets(buffer, MAX_LINE_LEN+1, fp))
 	return -1;
     linenumber++;
     pos = buffer;
@@ -343,9 +364,19 @@ static char *get_string(void)
     end = strchr(str, '\"');
     if(!end)
 	syntax("unterminated string constant", 1);
-    *end = '\0';
+    str = strndup(str, ptrdiff(end, str));
     pos = end+1;
     return str;
+}
+
+static char *get_unquoted_string(void)
+{
+    if(*pos == '"')
+	return get_string();
+    else {
+	char *str=get_next_token();
+	return strndup(str, token_length);
+    }
 }
 
 static unsigned long get_unumber(unsigned long max)
@@ -356,6 +387,8 @@ static unsigned long get_unumber(unsigned long max)
     skip_junk(1);
     last = pos;
     n=strtoul(pos, &pos, 0);
+    if(errno)
+	syntax("bad number", 0);
     if(last == pos)
 	syntax("numeral expected", 0);
     if(n > max)
@@ -373,6 +406,8 @@ static int get_number(void)
     skip_junk(1);
     last = pos;
     n=(int) strtol(pos, &pos, 0);
+    if(errno)
+	syntax("bad number", 0);
     if(last == pos)
 	syntax("numeral expected", 0);
     pos++;
@@ -430,7 +465,7 @@ static void prepend(void)
 static void append(void)
 {
     grow();
-    cur_dev = cur_devs;
+    cur_dev = (int) cur_devs;
     cur_devs++;
     init_drive();
 }
@@ -490,7 +525,10 @@ static int set_var(struct switches_l *switches, int nr,
 		    get_number();
 	    else if (switches[i].type == T_STRING)
 		* ((char**)((long)switches[i].address+base_address))=
-		    strdup(get_string());
+		    get_string();
+	    else if (switches[i].type == T_UQSTRING)
+		* ((char**)((long)switches[i].address+base_address))=
+		    get_unquoted_string();
 	    return 0;
 	}
     }
@@ -513,7 +551,6 @@ static int set_openflags(struct device *dev)
 static int set_misc_flags(struct device *dev)
 {
     unsigned int i;
-
     for(i=0; i < sizeof(misc_flags) / sizeof(*misc_flags); i++) {
 	if(match_token(misc_flags[i].name)) {
 	    flag_mask |= misc_flags[i].flag;
@@ -558,7 +595,7 @@ static int set_def_format(struct device *dev)
     return 1;
 }
 
-static int parse_one(int privilege);
+static void parse_all(int privilege);
 
 void set_cmd_line_image(char *img) {
   char *ofsp;
@@ -573,7 +610,7 @@ void set_cmd_line_image(char *img) {
     devices[cur_dev].name = strdup(img);
     devices[cur_dev].offset = 0;
   } else {
-    devices[cur_dev].name = strndup(img, ofsp - img);
+    devices[cur_dev].name = strndup(img, ptrdiff(ofsp, img));
     devices[cur_dev].offset = str_to_offset(ofsp+2);
   }
 
@@ -592,8 +629,20 @@ void set_cmd_line_image(char *img) {
     lastTokenLinenumber = 0;
     pos = buffer;
     token = 0;
-    while (parse_one(0));
+    parse_all(0);
   }
+}
+
+void check_number_parse_errno(char c, const char *oarg, char *endptr) {
+    if(endptr && *endptr) {
+	fprintf(stderr, "Bad number %s\n", oarg);
+	exit(1);
+    }
+    if(errno) {
+	fprintf(stderr, "Bad number %s for -%c (%s)\n", oarg,
+		c, strerror(errno));
+	exit(1);
+    }
 }
 
 static uint16_t tou16(int in, const char *comment) {
@@ -606,7 +655,6 @@ static uint16_t tou16(int in, const char *comment) {
 	exit(1);
     }
     return (uint16_t) in;
-       
 }
 
 static void parse_old_device_line(char drive)
@@ -615,7 +663,7 @@ static void parse_old_device_line(char drive)
     int items;
     long offset;
 
-    int heads, sectors;
+    int heads, sectors, tracks;
     
     /* finish any old drive */
     finish_drive_clause();
@@ -627,11 +675,10 @@ static void parse_old_device_line(char drive)
     append();
     items = sscanf(token,"%c %s %i %i %i %i %li",
 		   &devices[cur_dev].drive,name,&devices[cur_dev].fat_bits,
-		   &devices[cur_dev].tracks,&heads,
-		   &sectors, &offset);
+		   &tracks,&heads,&sectors, &offset);
     devices[cur_dev].heads = tou16(heads, "heads");
     devices[cur_dev].sectors = tou16(sectors, "sectors");
-    
+    devices[cur_dev].tracks = (unsigned int) tracks;
     devices[cur_dev].offset = (off_t) offset;
     switch(items){
 	case 2:
@@ -723,6 +770,12 @@ static int parse_one(int privilege)
     return 1;
 }
 
+static void parse_all(int privilege) {
+    errno=0;
+    while (parse_one(privilege));
+}
+
+
 static int parse(const char *name, int privilege)
 {
     if(fp) {
@@ -746,7 +799,7 @@ static int parse(const char *name, int privilege)
     token = 0;
     cur_dev = -1; /* no current device */
 
-    while(parse_one(privilege));
+    parse_all(privilege);
     finish_drive_clause();
     fclose(fp);
     filename = NULL;
