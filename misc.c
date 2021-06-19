@@ -171,9 +171,9 @@ time_t getTimeNow(time_t *now)
 		const char *source_date_epoch = getenv("SOURCE_DATE_EPOCH");
 		if (source_date_epoch) {
 			char *endptr;
-			errno = 0;
 			time_t epoch =
 				STRTOTIME(source_date_epoch, &endptr, 10);
+			errno = 0;
 
 			if (endptr == source_date_epoch)
 				fprintf(stderr,
@@ -206,30 +206,64 @@ time_t getTimeNow(time_t *now)
 /* Convert a string to an offset. The string should be a number,
    optionally followed by S (sectors), K (K-Bytes), M (Megabytes), G
    (Gigabytes) */
-off_t str_to_offset(char *str) {
-	char s, *endp = NULL;
+off_t str_to_offset_with_end(const char *str, char **endp) {
+	char s;
 	off_t ofs;
 
-	ofs = strtol(str, &endp, 0);
-	if (ofs <= 0)
-		return 0; /* invalid or missing offset */
-	s = *endp++;
-	if (s) {   /* trailing char, see if it is a size specifier */
-		if (s == 's' || s == 'S')       /* sector */
-			ofs <<= 9;
-		else if (s == 'k' || s == 'K')  /* kb */
-			ofs <<= 10;
-		else if (s == 'm' || s == 'M')  /* Mb */
-			ofs <<= 20;
-		else if (s == 'g' || s == 'G')  /* Gb */
-			ofs <<= 30;
-		else
-			return 0;      /* invalid character */
-		if (*endp)
-			return 0;      /* extra char, invalid */
-	}
+	*endp = NULL;
+	ofs = strtol(str, endp, 0);
+	s = **endp;
+	/* trailing char, see if it is a size specifier */
+	if (s == 's' || s == 'S')       /* sector */
+		ofs <<= 9;
+	else if (s == 'k' || s == 'K')  /* kb */
+		ofs <<= 10;
+	else if (s == 'm' || s == 'M')  /* Mb */
+		ofs <<= 20;
+	else if (s == 'g' || s == 'G')  /* Gb */
+		ofs <<= 30;
+	else
+		return ofs;      /* invalid character */
+	(*endp)++;
 	return ofs;
 }
+
+/* Convert a string to a size. The string should be a number,
+   optionally followed by S (sectors), K (K-Bytes), M (Megabytes), G
+   (Gigabytes) */
+size_t str_to_size_with_end(const char *str, char **endp) {
+	char s;
+	size_t siz;
+
+	*endp = NULL;
+	siz = strtoul(str, endp, 0);
+	s = **endp;
+	/* trailing char, see if it is a size specifier */
+	if (s == 's' || s == 'S')       /* sector */
+		siz <<= 9;
+	else if (s == 'k' || s == 'K')  /* kb */
+		siz <<= 10;
+	else if (s == 'm' || s == 'M')  /* Mb */
+		siz <<= 20;
+	else if (s == 'g' || s == 'G')  /* Gb */
+		siz <<= 30;
+	else
+		return siz;      /* invalid character */
+	(*endp)++;
+	return siz;
+}
+
+off_t str_to_offset(char *str) {
+	char *end;
+	off_t ofs = str_to_offset_with_end(str, &end);
+	if (ofs <= 0)
+		return 0; /* invalid or missing offset */
+	if (*end)
+		return 0; /* extra char, invalid */
+	return ofs;
+}
+
+
 
 #if 0
 

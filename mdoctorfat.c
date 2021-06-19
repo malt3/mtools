@@ -37,7 +37,7 @@ typedef struct Arg_t {
 	uint32_t fat;
 	int markbad;
 	int setsize;
-	unsigned long size;
+	uint32_t size;
 	Fs_t *Fs;
 } Arg_t;
 
@@ -98,6 +98,8 @@ void mdoctorfat(int argc, char **argv, int mtype UNUSEDP)
 	if(helpFlag(argc, argv))
 		usage(0);
 	while ((c = getopt(argc, argv, "i:bo:s:h")) != EOF) {
+		char *endptr = NULL;
+		errno=0;
 		switch (c) {
 			case 'i':
 				set_cmd_line_image(optarg);
@@ -106,17 +108,18 @@ void mdoctorfat(int argc, char **argv, int mtype UNUSEDP)
 				arg.markbad = 1;
 				break;
 			case 'o':
-				offset = strtoui(optarg,0,0);
+				offset = strtoui(optarg,&endptr,0);
 				break;
 			case 's':
 				arg.setsize=1;
-				arg.size = strtoul(optarg,0,0);
+				arg.size = strtou32(optarg,&endptr,0);
 				break;
 			case 'h':
 				usage(0);
 			case '?':
 				usage(1);
 		}
+		check_number_parse_errno((char)c, optarg, endptr);
 	}
 
 	if (argc - optind < 2)

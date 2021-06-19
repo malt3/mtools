@@ -138,6 +138,9 @@ typedef void *caddr_t;
 #define _LARGEFILE64_SOURCE
 #define _GNU_SOURCE
 
+#ifdef HAVE_ASSERT_H
+# include <assert.h>
+#endif
 
 #ifdef HAVE_FEATURES_H
 # include <features.h>
@@ -149,6 +152,22 @@ typedef void *caddr_t;
 #ifdef HAVE_STDINT_H
 # include <stdint.h>
 #endif
+
+#if HAVE_STDBOOL_H
+# include <stdbool.h>
+#else
+# if ! HAVE__BOOL
+#  ifdef __cplusplus
+typedef bool _Bool;
+#   else
+typedef unsigned char _Bool;
+#  endif
+# endif
+# define bool _Bool
+# define false 0
+# define true 1
+# define __bool_true_false_are_defined 1
+#endif 
 
 #ifdef HAVE_INTTYPES_H
 # include <inttypes.h>
@@ -346,6 +365,10 @@ extern int errno;
 
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
+#endif
+
+#ifdef HAVE_XLOCALE_H
+# include <xlocale.h>
 #endif
 
 #ifdef USE_FLOPPYD

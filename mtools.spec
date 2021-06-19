@@ -1,7 +1,7 @@
 %define _binary_payload w9.gzdio
 Name:           mtools
 Summary:        mtools, read/write/list/format DOS disks under Unix
-Version:        4.0.25
+Version:        4.0.31
 Release:        1
 License:        GPLv3+
 Group:          Utilities/System
@@ -135,6 +135,53 @@ if [ -f %{_bindir}/install-info ] ; then
 fi
 
 %changelog
+* Sat Jun 19 2021 Alain Knaff <alain@knaff.lu>
+- Move Linux-specific block device sizing code into
+  linux-specific section of devices.c
+- Error messages for all failure cases on fs_init failure
+- Fix compilation without XDF support (OpenImage signature)
+- Fix polarity of format_xdf command-line parameter of mformat
+- In XDF_IO retry enough times to actually succeed, even if
+  FDC was in a bad state before
+- Remove useless buffer flushing triggered when giving up a
+  reference to a stream node that is still referenced
+  elsewhere.
+- Clearer error message if neither size nor geometry of drive
+  to be mformatted is known
+- In mformat, make Fs dynamically allocated rather than
+  on-stack, so as to be able to use utilities supplied by
+  stream.c
+- Remove duplicate writing of backup boot sector
+- Allow to infer geometry if only size is specified
+- Protect against attempt to create zero-sized buffer
+- Code simplification in mattrib
+- Remove dead code in mpartition
+
+* Thu Jun 17 2021 Alain Knaff <alain@knaff.lu>
+- Fixed XDF floppy disk access
+- Fixed faulty behavior at end of image in mcat
+- Device/Image size handling refactoring
+- allow remap to write to zero-backed sectors (may happen if
+  buffer is flushed, and is not an error in that case)
+- Raise an error when trying to mcopy multiple source files
+  over a single destination file (rather than directory)
+- fix handling of "hidden" sectors (is a 2 byte quantity on
+  small disks, not 4 byte as previously assumed)
+- Modernize partition support. Tuned consistency check to
+  actually check about important issues (such as overlapping
+  partitions) rather than stuff nobody else cares about
+  (alignment on entire cylinder boundaries)
+- Move various "filter" options (partition, offset, swap,
+  scsi) into separate classes, rather than leaving almost
+  everything in plain_io
+- Simplify and centralize geometry handling and LBA code
+- Fix some more more compiler warnings
+* Mon May 31 2021 Alain Knaff <alain@knaff.lu>
+-Fix bug in cluster preallocation, which was accidentally introduced by compiler warning "fixes" from v4_0_28
+* Sat Nov 28 2020 Alain Knaff <alain@knaff.lu>
+- Fix compilation on Macintosh
+- Ignore image file locking errors if we are performing a read-only access anyways
+- Minor man-page fixes
 * Sat Oct 24 2020 Alain Knaff <alain@knaff.lu>
 - Preserve non-updated contents of info sector, just in case it contains program code
 - When parsing config file, always use "C" locale for case-insensitive comparisons

@@ -151,7 +151,7 @@ static void set_raw_tty(int mode)
 #ifdef USE_SGTTY
 			in_raw.sg_flags |= CBREAK;
 #else
-			in_raw.c_lflag &= ~ICANON;
+			in_raw.c_lflag &= ~0u ^ ICANON;
 			in_raw.c_cc[VMIN]=1;
 			in_raw.c_cc[VTIME]=0;			
 #endif
@@ -210,7 +210,12 @@ int ask_confirmation(const char *format, ...)
 		fflush(stderr);
 		fflush(opentty(-1));
 		if (mtools_raw_tty) {
-			ans[0] = fgetc(opentty(1));
+			int c = fgetc(opentty(1));
+			if(c < 0)
+				/* Treat end-of-file or error as no */
+				ans[0] = 'n';
+			else
+				ans[0] = (char) c;
 			fputs("\n", stderr);
 		} else {
 			if(fgets(ans,9, opentty(0)) == NULL)

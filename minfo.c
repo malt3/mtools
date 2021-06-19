@@ -55,6 +55,12 @@ static void displayInfosector(Stream_t *Stream, union bootsector *boot)
 		printf("last allocated cluster=%u\n", _DWORD(infosec->pos));
 }
 
+/*
+ * Number of hidden sector is only a 4 byte quantity if number of sectors is
+ */
+static uint32_t getHidden(union bootsector *boot) {
+	return WORD(psect) ? WORD(nhs) : DWORD(nhs);
+}
 
 static void displayBPB(Stream_t *Stream, union bootsector *boot) {
 	struct label_blk_t *labelBlock;
@@ -73,8 +79,8 @@ static void displayBPB(Stream_t *Stream, union bootsector *boot) {
 	printf("sectors per fat: %d\n", WORD(fatlen));
 	printf("sectors per track: %d\n", WORD(nsect));
 	printf("heads: %d\n", WORD(nheads));
-	printf("hidden sectors: %d\n", DWORD(nhs));
-	printf("big size: %d sectors\n", DWORD(bigsect));
+	printf("hidden sectors: %d\n", getHidden(boot));
+	printf("big size: %u sectors\n", DWORD(bigsect));
 
 	if(WORD(fatlen)) {
 		labelBlock = &boot->boot.ext.old.labelBlock;
@@ -202,7 +208,7 @@ void minfo(int argc, char **argv, int type UNUSEDP)
 					}
 				}
 				if(media == 0xf0)
-					hidden = DWORD_S(nhs);
+					hidden = getHidden(&boot);
 				else
 					hidden = 0;
 			} else {
@@ -233,7 +239,8 @@ void minfo(int argc, char **argv, int type UNUSEDP)
 			displayBPB(Stream, &boot);
 
 		if(verbose) {
-			int size;
+			uint16_t size;
+			ssize_t ssize;
 			unsigned char *buf;
 
 			printf("\n");
@@ -245,13 +252,13 @@ void minfo(int argc, char **argv, int type UNUSEDP)
 				exit(1);
 			}
 
-			size = READS(Stream, buf, (mt_off_t) 0, size);
-			if(size < 0) {
+			ssize = READS(Stream, buf, (mt_off_t) 0, size);
+			if(ssize < 0) {
 				perror("read boot sector");
 				exit(1);
 			}
 
-			print_sector("Boot sector hexdump", buf, size);
+			print_sector("Boot sector hexdump", buf, (uint16_t)ssize);
 		}
 	}
 	FREE(&Stream);
