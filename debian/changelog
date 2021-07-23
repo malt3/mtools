@@ -1,3 +1,8 @@
+mtools (4.0.34) stable; urgency=low
+
+  *  Fix mcopy -s issue
+
+ -- Alain Knaff <alain@knaff.lu>  Fri, 23 Jul 2021 12:41:11 +0200
 mtools (4.0.33) stable; urgency=low
 
   * Fix support for partitions (broken in
