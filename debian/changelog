@@ -1,3 +1,25 @@
+mtools (4.0.39) stable; urgency=low
+
+  * Rename strtoi to strosi (string to signed int). The strtoi
+    function on BSD does something else (returns an intmax, not an
+    int)
+
+ -- Alain Knaff <alain@knaff.lu>  Sun, 10 Apr 2022 19:19:40 +0200
+mtools (4.0.38) stable; urgency=low
+
+  * Make sure case byte is cleared when making the special
+    directory entries "." and ".."
+
+ -- Alain Knaff <alain@knaff.lu>  Thu,  3 Mar 2022 21:24:44 +0100
+mtools (4.0.37) stable; urgency=low
+
+  * Removed mclasserase commands, which doesn't fit the coding
+    structure of the rest of mtools
+  * Add support to -i option to mcd
+  * Document -i in mtools.1
+  * Fix a missing command error in floppyd_io.c
+
+ -- Alain Knaff <alain@knaff.lu>  Sun, 26 Dec 2021 18:57:02 +0100
 mtools (4.0.36) stable; urgency=low
 
   * Fix error status of recursive listing of empty root directory

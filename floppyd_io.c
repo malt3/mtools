@@ -40,7 +40,7 @@ static const char* AuthErrors[] = {
 	"Auth failed: Packet oversized",
 	"Auth failed: X-Cookie doesn't match",
 	"Auth failed: Wrong transmission protocol version",
-	"Auth failed: Device locked"
+	"Auth failed: Device locked",
 	"Auth failed: Bad packet",
 	"Auth failed: I/O Error"
 };
@@ -470,7 +470,7 @@ static int get_host_and_port_and_drive(const char* name, char** hostname,
 	  p++;
 	*drive = 0;
 	if(*p >= '0' && *p <= '9')
-	  *drive = strtoi(p, &p, 0);
+	  *drive = strtosi(p, &p, 0);
 
 	*display = strdup(newname);
 
