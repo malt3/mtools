@@ -142,8 +142,9 @@ typedef void *caddr_t;
 # include <features.h>
 #endif
 
-
-#include <sys/types.h>
+#ifdef HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
 
 #ifdef HAVE_STDINT_H
 # include <stdint.h>
@@ -284,8 +285,9 @@ extern int ioctl(int fildes, int request, void *arg);
 # endif
 #endif
 
-
-#include <sys/stat.h>
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
 
 #include <errno.h>
 #ifndef errno
@@ -337,9 +339,24 @@ extern int errno;
 
 #ifdef HAVE_WCHAR_H
 # include <wchar.h>
+# ifdef HAVE_WCTYPE_H
+#  include <wctype.h>
+# endif
 # ifndef HAVE_PUTWC
 #  define putwc(c,f) fprintf((f),"%lc",(c))
 # endif
+# ifndef HAVE_WCSDUP
+wchar_t *wcsdup(const wchar_t *wcs);
+# endif
+
+# ifndef HAVE_WCSCASECMP
+int wcscasecmp(const wchar_t *s1, const wchar_t *s2);
+# endif
+
+# ifndef HAVE_WCSNLEN
+size_t wcsnlen(const wchar_t *wcs, size_t l);
+# endif
+
 #else
 # define wcscmp strcmp
 # define wcscasecmp strcasecmp
@@ -347,14 +364,9 @@ extern int errno;
 # define wcslen strlen
 # define wcschr strchr
 # define wcspbrk strpbrk
-# define wchar_t char
-# define wint_t unsigned int
+# define wchar_t unsigned char
+# define wint_t int
 # define putwc putc
-#endif
-
-#ifdef HAVE_WCTYPE_H
-# include <wctype.h>
-#else
 # define towupper(x) toupper(x)
 # define towlower(x) tolower(x)
 # define iswupper(x) isupper(x)
@@ -479,21 +491,6 @@ int strncasecmp(const char *s1, const char *s2, size_t n);
 char *getpass(const char *prompt);
 #endif
 
-#ifdef HAVE_WCHAR_H
-
-# ifndef HAVE_WCSDUP
-wchar_t *wcsdup(const wchar_t *wcs);
-# endif
-
-# ifndef HAVE_WCSCASECMP
-int wcscasecmp(const wchar_t *s1, const wchar_t *s2);
-# endif
-
-# ifndef HAVE_WCSNLEN
-size_t wcsnlen(const wchar_t *wcs, size_t l);
-# endif
-
-#endif
 
 #if 0
 #ifndef HAVE_BASENAME
@@ -526,6 +523,18 @@ void _stripexe(char *filename);
 #ifndef O_ACCMODE
 #define O_ACCMODE (O_RDONLY | O_RDWR | O_WRONLY)
 #endif
+
+
+#if defined OS_hpux || \
+    defined OS_sunos || defined OS_solaris || \
+    defined OS_linux || \
+    (defined _SCO_DS) && (defined SCSIUSERCMD) || \
+    defined sgi || \
+    (defined OS_freebsd) && (__FreeBSD__ >= 2) || \
+    defined(OS_netbsd) || defined(OS_netbsdelf)
+# define HAVE_SCSI
+#endif
+
 
 /***************************************************************************/
 /*                                                                         */
@@ -706,6 +715,14 @@ unsigned int sleep(unsigned int seconds);
 #ifndef __inline__
 #define __inline__ inline
 #endif
+#endif
+
+#if SIZEOF_SIZE_T > SIZEOF_LONG
+# define SZF "%llu"
+# define SSZF "%lld"
+#else
+# define SZF "%lu"
+# define SSZF "%ld"
 #endif
 
 #endif

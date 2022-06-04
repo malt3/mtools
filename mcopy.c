@@ -22,7 +22,6 @@
 
 
 #include "sysincludes.h"
-#include "msdos.h"
 #include "mtools.h"
 #include "mainloop.h"
 #include "plain_io.h"
@@ -560,7 +559,7 @@ void mcopy(int argc, char **argv, int mtype)
 				batchmode = 1;
 				break;
 			case 'o':
-				handle_clash_options(&arg.ch, (char) c);
+				handle_clash_options(&arg.ch, c);
 				break;
 			case 'D':
 				if(handle_clash_options(&arg.ch, *optarg))

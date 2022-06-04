@@ -17,10 +17,8 @@
  */
 
 #include "sysincludes.h"
-#include "msdos.h"
 #include "mtools.h"
 #include "vfat.h"
-#include "codepage.h"
 #include "file_name.h"
 
 /* Write a DOS name + extension into a legal unix-style name.  */
@@ -69,17 +67,17 @@ static void TranslateToDos(doscp_t *toDos, const char *in, char *out,
 			continue;
 		}
 
-		if (iswcntrl((wint_t)*s)) {
+		if (iswcntrl(*s)) {
 			/* "control" characters */
 			*mangled |= 3;
 			buffer[t_idx] = '_';
-		} else if (iswlower((wint_t)*s)) {
+		} else if (iswlower(*s)) {
 			buffer[t_idx] = ch_towupper(*s);
 			if(*Case == UPPER && !mtools_no_vfat)
 				*mangled |= 1;
 			else
 				*Case = LOWER;
-		} else if (iswupper((wint_t)*s)) {
+		} else if (iswupper(*s)) {
 			buffer[t_idx] = *s;
 			if(*Case == LOWER && !mtools_no_vfat)
 				*mangled |= 1;
