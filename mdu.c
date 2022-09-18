@@ -19,12 +19,10 @@
  */
 
 #include "sysincludes.h"
-#include "msdos.h"
 #include "mtools.h"
 #include "file.h"
 #include "mainloop.h"
 #include "fs.h"
-#include "codepage.h"
 
 
 typedef struct Arg_t {

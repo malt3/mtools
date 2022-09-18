@@ -16,9 +16,7 @@
  */
 
 #include "sysincludes.h"
-#include "msdos.h"
 #include "mtools.h"
-#include "partition.h"
 
 const char *progname;
 

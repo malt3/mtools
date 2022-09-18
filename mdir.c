@@ -20,12 +20,10 @@
  */
 
 #include "sysincludes.h"
-#include "msdos.h"
 #include "mtools.h"
 #include "file.h"
 #include "mainloop.h"
 #include "fs.h"
-#include "codepage.h"
 #include "file_name.h"
 
 #ifdef TEST_SIZE
@@ -64,7 +62,7 @@ static char mdir_longname[4*MAX_VNAMELEN+1];
 /*
  * Print an MSDOS directory date stamp.
  */
-static __inline__ void print_date(struct directory *dir)
+static inline void print_date(struct directory *dir)
 {
 	char year[5];
 	char day[3];
@@ -100,7 +98,7 @@ static __inline__ void print_date(struct directory *dir)
 /*
  * Print an MSDOS directory time stamp.
  */
-static __inline__ void print_time(struct directory *dir)
+static inline void print_time(struct directory *dir)
 {
 	char am_pm;
 	int hour = DOS_HOUR(dir);
@@ -158,7 +156,7 @@ static const char *dotted_num(mt_off_t num, size_t width, char **buf)
 	srcp = (*buf)+len;
 	dstp = (*buf)+len+1;
 
-	for ( ; dstp >= (*buf)+4 && isdigit (srcp[-1]); ) {
+	for ( ; dstp >= (*buf)+4 && isdigit ((unsigned char)srcp[-1]); ) {
 		srcp -= 3;  /* from here we copy three digits */
 		dstp -= 4;  /* that's where we put these 3 digits */
 	}
@@ -179,7 +177,7 @@ static const char *dotted_num(mt_off_t num, size_t width, char **buf)
 	return (*buf) + len-width;
 }
 
-static __inline__ int print_volume_label(Stream_t *Dir, char drive)
+static inline int print_volume_label(Stream_t *Dir, char drive)
 {
 	Stream_t *Stream = GetFs(Dir);
 	direntry_t entry;
@@ -484,7 +482,7 @@ static int list_non_recurs_directory(direntry_t *entry, MainParam_t *mp)
 
 
 static int list_recurs_directory(direntry_t *entry UNUSEDP,
-				 MainParam_t *mp UNUSEDP)
+				 MainParam_t *mp)
 {
 	MainParam_t subMp;
 	int ret;

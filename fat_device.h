@@ -1,4 +1,7 @@
-/*  Copyright 1996,1997,2001,2002,2009 Alain Knaff.
+#ifndef MTOOLS_FAT_DEVICE_H
+#define MTOOLS_FAT_DEVICE_H
+
+/*  Copyright 2022 Alain Knaff.
  *  This file is part of mtools.
  *
  *  Mtools is free software: you can redistribute it and/or modify
@@ -13,20 +16,15 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with Mtools.  If not, see <http://www.gnu.org/licenses/>.
- *
- * hashtable
  */
 
-typedef struct hashtable T_HashTable;
-typedef uint32_t (*T_HashFunc)(void *);
-typedef int (*T_ComparFunc)(void *, void *);
+#include "msdos.h"
+#include "device.h"
+#include "stream.h"
 
+Stream_t *find_device(char drive, int mode, struct device *out_dev,
+		      union bootsector *boot,
+		      char *name, int *media, mt_off_t *maxSize,
+		      int *isRop);
 
-int make_ht(T_HashFunc f1, T_HashFunc f2, T_ComparFunc c, size_t size,
-	    T_HashTable **H);
-int hash_add(T_HashTable *H, void *E, size_t *hint);
-int hash_remove(T_HashTable *H, void *E, size_t hint);
-int hash_lookup(T_HashTable *H, void *E, void **E2,
-		size_t *hint);
-int free_ht(T_HashTable *H, T_HashFunc entry_free);
-
+#endif

@@ -1,12 +1,12 @@
 %define _binary_payload w9.gzdio
 Name:           mtools
 Summary:        mtools, read/write/list/format DOS disks under Unix
-Version:        4.0.39
+Version:        4.0.41
 Release:        1
 License:        GPLv3+
 Group:          Utilities/System
 URL:            http://www.gnu.org/software/mtools/
-Source:         ftp://ftp.gnu.org/gnu/%{name}/%{name}-%{version}.tar.gz
+Source:         http://ftp.gnu.org/gnu/%{name}/%{name}-%{version}.tar.gz
 Buildroot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 
@@ -133,8 +133,15 @@ if [ -f %{_bindir}/install-info ] ; then
 fi
 
 %changelog
-* Thu May 12 2022 Alain Knaff <alain@knaff.lu>
+* Sun Sep 18 2022 Alain Knaff <alain@knaff.lu>
+- Made it possible again to have FAT32 filesystems with less
+  than 0xfff5 clusters
+- Make FAT32 entries 0 and 1 match what windows 10 does
+- Misc source code and configure script cleanup
+* Sat Jun 04 2022 Alain Knaff <alain@knaff.lu>
 - Remove libbsd dependency
+- Better compatibility with legacy platforms such as AT&T UnixPC
+- Upgraded to autoconf 2.71
 * Sun Apr 10 2022 Alain Knaff <alain@knaff.lu>
 - Rename strtoi to strosi (string to signed int). The strtoi function
   on BSD does something else (returns an intmax, not an int)

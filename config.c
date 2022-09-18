@@ -17,7 +17,6 @@
  */
 #include "sysincludes.h"
 #include "mtools.h"
-#include "codepage.h"
 #include "mtoolsPaths.h"
 
 /* global variables */
@@ -49,7 +48,7 @@ static int cur_dev; /* device being filled in. If negative, none */
 static int trusted=0; /* is the currently parsed device entry trusted? */
 static unsigned int nr_dev; /* number of devices that the current table can
 			       hold */
-struct device *devices; /* the device table */
+struct device *devices=NULL; /* the device table */
 static int token_nr; /* number of tokens in line */
 
 static char default_drive='\0'; /* default drive */
@@ -67,7 +66,6 @@ unsigned int mtools_twenty_four_hour_clock=1;
 unsigned int mtools_lock_timeout=30;
 unsigned int mtools_default_codepage=850;
 const char *mtools_date_string="yyyy-mm-dd";
-char *country_string=0;
 
 typedef struct switches_l {
     const char *name;
@@ -253,8 +251,10 @@ static void syntax(const char *msg, int thisLine)
     exit(1);
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wcast-align"
+#ifdef HAVE_PRAGMA_DIAGNOSTIC
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wcast-align"
+#endif
 static void get_env_conf(void)
 {
     char *s;
@@ -291,7 +291,9 @@ static void get_env_conf(void)
 	}
     }
 }
+#ifdef HAVE_PRAGMA_DIAGNOSTIC
 #pragma GCC diagnostic pop
+#endif
 
 static int mtools_getline(void)
 {
@@ -505,8 +507,11 @@ static void finish_drive_clause(void)
     cur_dev = -1;
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wcast-align"
+#ifdef HAVE_PRAGMA_DIAGNOSTIC
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wcast-align"
+#endif
+
 static int set_var(struct switches_l *switches, int nr,
 		   caddr_t base_address)
 {
@@ -542,7 +547,9 @@ static int set_var(struct switches_l *switches, int nr,
     }
     return 1;
 }
+#ifdef HAVE_PRAGMA_DIAGNOSTIC
 #pragma GCC diagnostic pop
+#endif
 
 static int set_openflags(struct device *dev)
 {
